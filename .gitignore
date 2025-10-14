@@ -1,0 +1,39 @@
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# Editor
+.vscode/
+.idea/
+
+# Byte-compiled / optimized / DLL files
+*.so
+
+# Testing
+.pytest_cache/
+.coverage
+coverage.xml
+
+# Logs
+*.log
+
+# Local env files
+.env
+.env.*
+
+# Wheels and distributions
+build/
+dist/
+*.egg-info/
+
+
