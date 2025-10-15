@@ -9,6 +9,7 @@ from ..crud import user as crud_user
 from ..auth.password import verify_password
 from ..auth.jwt import create_access_token, verify_token
 from ..config import settings
+from ..utils.email import send_welcome_email
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -41,7 +42,16 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
     if db_user:
         raise HTTPException(status_code=400, detail="Username already taken")
     
-    return crud_user.create_user(db=db, user=user)
+    # Create user
+    new_user = crud_user.create_user(db=db, user=user)
+    
+    # Send welcome email
+    try:
+        send_welcome_email(new_user.email, new_user.username)
+    except Exception as e:
+        print(f"Failed to send welcome email: {e}")
+    
+    return new_user
 
 @router.post("/login", response_model=Token)
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
