@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import axios from 'axios';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -19,27 +20,23 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:8000/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: new URLSearchParams({
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/auth/login`,
+        new URLSearchParams({
           username: formData.username,
           password: formData.password,
         }),
-      });
+        {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+        }
+      );
 
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.detail || 'Login failed');
-      }
-
-      const data = await response.json();
-      localStorage.setItem('token', data.access_token);
+      localStorage.setItem('token', response.data.access_token);
       router.push('/dashboard');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+    } catch (err: any) {
+      setError(err.response?.data?.detail || err.message || 'Login failed');
     } finally {
       setLoading(false);
     }

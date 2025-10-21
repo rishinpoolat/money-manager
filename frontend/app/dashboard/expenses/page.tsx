@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import api from '@/lib/api';
 
 interface Category {
   id: number;
@@ -35,20 +36,9 @@ export default function ExpensesPage() {
   }, []);
 
   const fetchExpenses = async () => {
-    const token = localStorage.getItem('token');
-    if (!token) return;
-
     try {
-      const response = await fetch('http://localhost:8000/expenses/', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setExpenses(data);
-      }
+      const response = await api.get('/expenses/');
+      setExpenses(response.data);
     } catch (error) {
       console.error('Error fetching expenses:', error);
     } finally {
@@ -57,20 +47,9 @@ export default function ExpensesPage() {
   };
 
   const fetchCategories = async () => {
-    const token = localStorage.getItem('token');
-    if (!token) return;
-
     try {
-      const response = await fetch('http://localhost:8000/categories/', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setCategories(data);
-      }
+      const response = await api.get('/categories/');
+      setCategories(response.data);
     } catch (error) {
       console.error('Error fetching categories:', error);
     }
@@ -85,28 +64,13 @@ export default function ExpensesPage() {
     e.preventDefault();
     setError('');
 
-    const token = localStorage.getItem('token');
-    if (!token) return;
-
     try {
-      const response = await fetch('http://localhost:8000/expenses/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          category_id: parseInt(formData.category_id),
-          amount: parseFloat(formData.amount),
-          description: formData.description,
-          date: formData.date,
-        }),
+      await api.post('/expenses/', {
+        category_id: parseInt(formData.category_id),
+        amount: parseFloat(formData.amount),
+        description: formData.description,
+        date: formData.date,
       });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.detail || 'Failed to create expense');
-      }
 
       setFormData({
         category_id: '',
@@ -116,28 +80,17 @@ export default function ExpensesPage() {
       });
       setShowForm(false);
       fetchExpenses();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+    } catch (err: any) {
+      setError(err.response?.data?.detail || err.message || 'An error occurred');
     }
   };
 
   const handleDelete = async (id: number) => {
     if (!confirm('Are you sure you want to delete this expense?')) return;
 
-    const token = localStorage.getItem('token');
-    if (!token) return;
-
     try {
-      const response = await fetch(`http://localhost:8000/expenses/${id}`, {
-        method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (response.ok) {
-        fetchExpenses();
-      }
+      await api.delete(`/expenses/${id}`);
+      fetchExpenses();
     } catch (error) {
       console.error('Error deleting expense:', error);
     }

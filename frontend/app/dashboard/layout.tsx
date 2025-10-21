@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
+import api from '@/lib/api';
 
 export default function DashboardLayout({
   children,
@@ -20,23 +21,13 @@ export default function DashboardLayout({
       return;
     }
 
-    fetchUser(token);
+    fetchUser();
   }, [router]);
 
-  const fetchUser = async (token: string) => {
+  const fetchUser = async () => {
     try {
-      const response = await fetch('http://localhost:8000/users/me', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch user');
-      }
-
-      const data = await response.json();
-      setUser(data);
+      const response = await api.get('/users/me');
+      setUser(response.data);
     } catch (error) {
       console.error('Error fetching user:', error);
       localStorage.removeItem('token');

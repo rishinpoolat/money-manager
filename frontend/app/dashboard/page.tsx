@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import api from '@/lib/api';
 
 interface BudgetSummary {
   total_budget: number;
@@ -19,27 +20,18 @@ export default function DashboardPage() {
   }, []);
 
   const fetchBudgetSummary = async () => {
-    const token = localStorage.getItem('token');
-    if (!token) return;
-
     try {
-      const response = await fetch('http://localhost:8000/budgets/summary', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await api.get('/budgets/summary');
+      const data = response.data;
 
-      if (response.ok) {
-        const data = await response.json();
-        if (Array.isArray(data)) {
-          const summary = {
-            total_budget: data.reduce((sum: number, item: any) => sum + item.budget, 0),
-            total_spent: data.reduce((sum: number, item: any) => sum + item.spent, 0),
-            remaining: data.reduce((sum: number, item: any) => sum + item.remaining, 0),
-            budget_count: data.length,
-          };
-          setBudgetSummary(summary);
-        }
+      if (Array.isArray(data)) {
+        const summary = {
+          total_budget: data.reduce((sum: number, item: any) => sum + item.budget, 0),
+          total_spent: data.reduce((sum: number, item: any) => sum + item.spent, 0),
+          remaining: data.reduce((sum: number, item: any) => sum + item.remaining, 0),
+          budget_count: data.length,
+        };
+        setBudgetSummary(summary);
       }
     } catch (error) {
       console.error('Error fetching budget summary:', error);

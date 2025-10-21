@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import api from '@/lib/api';
 
 interface Category {
   id: number;
@@ -24,20 +25,9 @@ export default function CategoriesPage() {
   }, []);
 
   const fetchCategories = async () => {
-    const token = localStorage.getItem('token');
-    if (!token) return;
-
     try {
-      const response = await fetch('http://localhost:8000/categories/', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setCategories(data);
-      }
+      const response = await api.get('/categories/');
+      setCategories(response.data);
     } catch (error) {
       console.error('Error fetching categories:', error);
     } finally {
@@ -49,49 +39,22 @@ export default function CategoriesPage() {
     e.preventDefault();
     setError('');
 
-    const token = localStorage.getItem('token');
-    if (!token) return;
-
     try {
-      const response = await fetch('http://localhost:8000/categories/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(formData),
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.detail || 'Failed to create category');
-      }
-
+      await api.post('/categories/', formData);
       setFormData({ name: '', description: '' });
       setShowForm(false);
       fetchCategories();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+    } catch (err: any) {
+      setError(err.response?.data?.detail || err.message || 'An error occurred');
     }
   };
 
   const handleDelete = async (id: number) => {
     if (!confirm('Are you sure you want to delete this category?')) return;
 
-    const token = localStorage.getItem('token');
-    if (!token) return;
-
     try {
-      const response = await fetch(`http://localhost:8000/categories/${id}`, {
-        method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (response.ok) {
-        fetchCategories();
-      }
+      await api.delete(`/categories/${id}`);
+      fetchCategories();
     } catch (error) {
       console.error('Error deleting category:', error);
     }

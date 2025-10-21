@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { authApi } from '@/lib/api';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -32,26 +33,15 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:8000/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          username: formData.username,
-          email: formData.email,
-          password: formData.password,
-        }),
+      await authApi.post('/auth/register', {
+        username: formData.username,
+        email: formData.email,
+        password: formData.password,
       });
 
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.detail || 'Registration failed');
-      }
-
       router.push('/login');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+    } catch (err: any) {
+      setError(err.response?.data?.detail || err.message || 'Registration failed');
     } finally {
       setLoading(false);
     }

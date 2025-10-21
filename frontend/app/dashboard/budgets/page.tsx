@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import api from '@/lib/api';
 
 interface Category {
   id: number;
@@ -33,20 +34,9 @@ export default function BudgetsPage() {
   }, []);
 
   const fetchBudgets = async () => {
-    const token = localStorage.getItem('token');
-    if (!token) return;
-
     try {
-      const response = await fetch('http://localhost:8000/budgets/', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setBudgets(data);
-      }
+      const response = await api.get('/budgets/');
+      setBudgets(response.data);
     } catch (error) {
       console.error('Error fetching budgets:', error);
     } finally {
@@ -55,20 +45,9 @@ export default function BudgetsPage() {
   };
 
   const fetchCategories = async () => {
-    const token = localStorage.getItem('token');
-    if (!token) return;
-
     try {
-      const response = await fetch('http://localhost:8000/categories/', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setCategories(data);
-      }
+      const response = await api.get('/categories/');
+      setCategories(response.data);
     } catch (error) {
       console.error('Error fetching categories:', error);
     }
@@ -83,27 +62,12 @@ export default function BudgetsPage() {
     e.preventDefault();
     setError('');
 
-    const token = localStorage.getItem('token');
-    if (!token) return;
-
     try {
-      const response = await fetch('http://localhost:8000/budgets/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          category_id: parseInt(formData.category_id),
-          amount: parseFloat(formData.amount),
-          month: formData.month,
-        }),
+      await api.post('/budgets/', {
+        category_id: parseInt(formData.category_id),
+        amount: parseFloat(formData.amount),
+        month: formData.month,
       });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.detail || 'Failed to create budget');
-      }
 
       setFormData({
         category_id: '',
@@ -112,28 +76,17 @@ export default function BudgetsPage() {
       });
       setShowForm(false);
       fetchBudgets();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+    } catch (err: any) {
+      setError(err.response?.data?.detail || err.message || 'An error occurred');
     }
   };
 
   const handleDelete = async (id: number) => {
     if (!confirm('Are you sure you want to delete this budget?')) return;
 
-    const token = localStorage.getItem('token');
-    if (!token) return;
-
     try {
-      const response = await fetch(`http://localhost:8000/budgets/${id}`, {
-        method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (response.ok) {
-        fetchBudgets();
-      }
+      await api.delete(`/budgets/${id}`);
+      fetchBudgets();
     } catch (error) {
       console.error('Error deleting budget:', error);
     }
